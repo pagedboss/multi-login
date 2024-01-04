@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<!-- saved from url=(0044)https://dl.mail.com/uim/live/logic_pbjs.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><script type="text/javascript" async="" src="./publishertag.prebid.139.js.download"></script>
+		<title>prebid.js</title>
+		
+		<style>
+			body {
+				margin: 0px;
+				overflow: hidden;
+				background-color: transparent;
+			}
+		</style>
+		<script>
+			/* init */
+			var pbjs = pbjs || {};
+			pbjs.que = pbjs.que || [];
+			pbjs.handleQueue = [];
+			pbjs.all_bids = {};
+			//pbjs.customTime = {startTime: (new Date()).getTime()};
+			pbjs.postmessageextender = {};
+			pbjs.wonBids = {};
+			pbjs.pubStackwonBids = {};
+			/* generic config */
+			pbjs.load_version = "44";
+			pbjs.er_usd_eur = 0.91762;
+			pbjs.logicv = '231206';
+			// IE LEGACY
+			/* IE LEGACY event */
+			var addEvent = (function () {
+				if (window.addEventListener) {
+					return function (el, ev, fn) {
+						el.addEventListener(ev, fn, false);
+					};
+				} 
+				return function (el, ev, fn) {
+					el.attachEvent('on' + ev, function() {
+						return fn.call(el, window.event);
+					});
+				};
+			}());
+			/* IE LEGACY object.assign */
+			function assignObject(obj,newAtts) {
+				if(typeof Object.assign == "function"){
+					return Object.assign(newAtts,obj);
+				} else {
+					var objs = [obj,newAtts];
+					return objs.reduce(function (r, o) {
+						Object.keys(o).forEach(function (k) {
+							r[k] = o[k];
+						});
+						return r;
+					}, {});
+				}
+			}
+			// IE LEGACY END
+			/* readcookie */
+			function getCookieValue(cookie) {
+				var val = document.cookie.match('(^|;)\\s*' + cookie + '\\s*=\\s*([^;]+)');
+				return val ? val.pop() : '';
+			}
+			/* debugging */
+			// document.cookie = 'pbjsdebug = 1; domain=.web.de; expires=Thu, 20 Jun 2020 14:37:06 GMT; path=/';
+			var isDev = window.location.href.indexOf("/dev/") !== -1 || window.location.href.indexOf("_dev") !== -1;
+			//document.write('<script src="https://'+location.host+'/tcf/'+(isDev ? "qa" : "live")+'/v1/js/tcf-stub.js"><\/script>');
+			function pbdbg(obj){
+				if(document.cookie.indexOf("pbjsdebug=1") !== -1){
+					if(typeof obj.message == "object" && obj.message.length == 2){console.log("%c" + obj.message[0] + (typeof obj.message[1] == "string" ? "%c " + obj.message[1] : ""),"color:black;font-weight:bold;",(typeof obj.message[1] == "string" ? "color:grey;" : ""),(typeof obj.message[1] !== "string" ? obj.message[1] : ""));} else if(typeof obj.message == "object" && obj.message.length == 3){console.log("%c" + obj.message[0] + "%c " + obj.message[1] + (typeof obj.message[2] == "string" ? "%c " + obj.message[2] : ""),"color:black;font-weight:bold;","color:darkgreen;font-weight:bold;",(typeof obj.message[2] == "string" ? "color:grey;" : ""),(typeof obj.message[2] !== "string" ? obj.message[2] : ""));} else if(typeof obj.message == "object" && obj.message.length > 3){console.log("%c" + obj.message[0] + "%c " + obj.message[1] + "%c " + obj.message[2] + (typeof obj.message[3] == "string" ? "%c " + obj.message[3] : ""),"color:black;font-weight:bold;","color:darkgreen;font-weight:bold;","color:grey;",(typeof obj.message[3] == "string" ? "color:orange;font-weight:bold;" : ""),(typeof obj.message[3] !== "string" ? obj.message[3] : ""));} else if(typeof obj.message == "object") {console.log(obj.message[0]);}
+				}
+			};
+			pbjs.resetGlobalConfig = function(){
+				pbjs.globalConfig = JSON.parse(window.name);
+			}
+			pbjs.resetGlobalConfig();
+			var showSection = pbjs.globalConfig.params.category == "mail" ? pbjs.globalConfig.params.section + "|" : "";
+			//pbdbg({message:["pbjs","generic","globalConfig",pbjs.globalConfig]});
+			// LOADING RESSOURCES
+			/* load tcf consent */
+			pbjs.tcfcallbackQueue = [];
+			pbjs.runTCFqueue = function(){
+				//pbdbg({message:["pbjs","tcf_loaded"]});
+				if(pbjs.tcfcallbackQueue.length > 0) {
+					for(var i = 0; i < pbjs.tcfcallbackQueue.length; i++) {
+						pbjs.tcfcallbackQueue[i]();
+					}
+				}
+			}
+			window.__tcfapi = typeof window.__tcfapi !== "undefined" ? window.__tcfapi : function(action,version,callback) {
+				//pbdbg({message:["pbjs","run_tcfcall_from_custom_queue",[action,version,callback]]});
+				if(action != undefined && version != undefined && callback != undefined){pbjs.tcfcallbackQueue.push(function(){window.__tcfapi(action,version,callback);});}
+			}
+			if(pbjs.globalConfig.params.layoutclass == 's'/* || (pbjs.globalConfig.params.hasOwnProperty("int") && pbjs.globalConfig.params.portal == "gmxfr")*/){
+				document.write('<script src="https://'+location.host+'/tcf/'+(isDev ? "qa" : "live")+'/v1/js/tcf-stub.js" onload="pbjs.runTCFqueue()"><\/script>');
+				// tcf-api takes ~ 70ms to load. tcf-stub ~500ms -> timing problem for id-system
+			} else {
+				document.write('<script src="https://'+location.host+'/tcf/'+(isDev ? "qa" : "live")+'/v1/js/tcf-api.js" onload="pbjs.runTCFqueue()"><\/script>');
+			}
+			/* load thirdparty */
+			if(typeof getCookieValue == "function" && getCookieValue("idcc")=="2" && getCookieValue("tp_id")!=""){
+				var ixscript = document.createElement("script");
+				ixscript.src = "https://js-sec.indexww.com/ht/p/189131-10386831917551"+(isDev ? "-stage" : "")+".js";
+				ixscript.setAttribute("async","async");
+				document.getElementsByTagName("head")[0].appendChild(ixscript);
+			}
+			if(pbjs.globalConfig.params.hasOwnProperty("int")){
+				if(typeof getCookieValue == "function" && getCookieValue("GDNA")=="1"){
+					var pmscript = document.createElement("script");
+					pmscript.src = "https://ads.pubmatic.com/AdServer/js/pwt/157878/2487/pwt.js";
+					pmscript.setAttribute("async","async");
+					document.getElementsByTagName("head")[0].appendChild(pmscript);
+				}
+				if(typeof getCookieValue == "function" && getCookieValue("euconsent-v2")!=""){
+					window.addEventListener("load",function(){
+						var ylscript = document.createElement("iframe");
+						ylscript.src = "https://ad.yieldlab.net/d/6846326/766/2x2?ts="+Math.round(Math.random() * 9999999999)+"&type=h&gdpr=1&consent="+getCookieValue("euconsent-v2");
+						document.getElementsByTagName("body")[0].appendChild(ylscript);
+					},false);
+				}
+			}
+			/* load prebid */
+			pbjs.script = document.createElement("script");
+			pbjs.script.async = 1;
+			pbjs.script.src = "//"+location.host+"/uim/container/prebid"+(pbjs.globalConfig.params.hasOwnProperty("int") ? "-int" : "")+"_" + (isDev ? "dev" : pbjs.load_version) + ".js";
+			document.getElementsByTagName("head")[0].appendChild(pbjs.script);
+			/* tgp */
+			var pbTargeting = pbjs.globalConfig.params.hasOwnProperty("targeting") ? Object.assign(pbjs.globalConfig.params.targeting,{}) : {};
+			try {
+				if(typeof(Storage) !== "undefined"){
+					if(typeof sessionStorage.prebid_tgp !== "undefined"){
+						var temp_targeting = JSON.parse(sessionStorage.prebid_tgp);
+						if(typeof temp_targeting.store == "object" && !(temp_targeting.store instanceof Array) && (pbjs.globalConfig.params.category == "logout" || pbjs.globalConfig.params.category == "mail")) {
+							pbTargeting = Object.assign(temp_targeting.store,pbTargeting);
+						} else if(typeof temp_targeting.cookie == "object" && !(temp_targeting.cookie instanceof Array)) {
+							pbTargeting = Object.assign(temp_targeting.cookie,pbTargeting);
+						}
+					}
+					if(typeof localStorage.prebid_tgp !== "undefined"){
+						var temp_ltargeting = JSON.parse(localStorage.prebid_tgp);
+						pbTargeting = Object.assign(temp_ltargeting,pbTargeting);
+					}
+				}
+			} catch(e) { }
+			/* tgp end */
+			/* amzn start */
+			var iframeconnector = document.createElement("script");
+			iframeconnector.src = "https://"+location.host+"/uim/bidding/connector.js";
+			document.getElementsByTagName("head")[0].appendChild(iframeconnector);
+			addEvent(iframeconnector,"load",function(e){
+				window.amznbidding = new Connector({
+					connectionName: 'amznbidding',
+					windowName: 'hiddeniframe',
+					windowCount: 2
+				});
+				window.amznbidding.init();
+			});
+			var amznscript = document.createElement("script");
+			amznscript.src = "//c.amazon-adsystem.com/aax2/apstag.js";
+			document.getElementsByTagName("head")[0].appendChild(amznscript);
+			!function(a9,a,p,s,t,A,g){if(a[a9])return;function q(c,r){a[a9]._Q.push([c,r])}a[a9]={init:function(){q("i",arguments)},fetchBids:function(){q("f",arguments)},setDisplayBids:function(){},targetingKeys:function(){return[]},dpa:function(){q("di",arguments)},rpa:function(){q("ri",arguments)},upa:function(){q("ui",arguments)},_Q:[]};}("apstag",window);
+			apstag.init({
+				pubID: '3206',
+				deals:true,
+				bidTimeout: pbjs.globalConfig.timeout.initial.bidder+(isDev ? -2000 : 0),
+				gdpr: {
+					cmpTimeout: pbjs.globalConfig.timeout.cmp
+				}
+			});
+			if(pbTargeting.hasOwnProperty("T9429")){
+				//pbdbg({message:["pbjs::amzn",showSection+"uids","T9429::"+pbTargeting.T9429]});
+				apstag.rpa({
+					hashedRecords:[{type:'email',record:pbTargeting.T9429}]
+				});
+			}
+			/* amzn end */
+			var pbstcksite = {'webde|homepage':'0381ca50-4030-4c82-84c2-37d6b61b9d3e','webde|magazine':'44220084-89fd-4ddf-b95c-8a67267d368e','webde|partnernews':'de70aadd-e113-4872-95ec-d0e73c2b3d77','webde|logout':'3c48f23f-a3ae-4f04-8f8b-7c008e617ab4','gmx|homepage':'02732ef0-b291-48ea-b248-9a2b7656ccfe','gmx|magazine':'ffe1c363-58cf-46e4-ac1f-cd020a0d434e','gmx|partnernews':'6d671cb6-9b42-4329-aee3-28c9abad34ff','gmx|logout':'4bfa0404-2ef3-4cc1-9229-c11410d61232','gmxat|homepage':'fd18cae3-7367-482c-b7ef-557eb241ae44','gmxat|magazine':'04b538d0-8e42-4b78-9824-70d2b5ec9f1d','gmxat|partnernews':'f763ef83-78f2-49f4-9838-584d59a5dcd6','gmxat|logout':'40773f34-0442-4ab5-af72-59aef4556de4','gmxch|homepage':'8911e438-7773-4927-954c-116c7eb46330','gmxch|magazine':'b8f7fa0b-adb4-495e-9455-f6e60ddde630','gmxch|partnernews':'84b5d398-84df-4a27-8c04-0a71da55e989','gmxch|logout':'6c8952e6-8f61-45bc-9b7f-321b6be2eb3b','1und1|homepage':'3182fb7f-62c8-4015-ba30-dea423e53012','1und1|magazine':'b11323cb-e727-4e67-a310-d68ef4b73e29','1und1|partnernews':'2ab31bb2-abc7-4d80-ae7c-9b3c6117020d','mailcom|homepage':'43bcf9e4-54f1-44c7-a372-5c74dd47dac6','mailcom|magazine':'28bcacf2-5ca0-4e56-92a3-15d92c27c899','mailcom|logout':'b8e0386b-17a3-4219-8f7b-ecb9e96f4bbc','mailcom|mail':'bfce455b-7ef5-4a8b-a9c5-571ec1cc6952','gmxcom|homepage':'d41cfcdd-ec96-4027-ad22-053661cbaf23','gmxcom|magazine':'41ec8474-b329-48de-acb5-f2ce6d8eec25','gmxcom|logout':'415e3e14-1136-4e38-9102-eff9d5ad0bf9','gmxcom|mail':'39fb1ddf-e76a-4bc7-aaab-527fedbc09cb','gmxes|homepage':'ffb9ca43-779f-444f-a8d3-3d9b1be5282b','gmxes|magazine':'f7bceab3-8699-4735-9aba-f918fac7b9fa','gmxes|logout':'b103c0db-174d-4aef-a717-170d117c694b','gmxes|mail':'fe0a29f3-cb5d-4abc-8b2f-e7f4005e0184','gmxfr|homepage':'80ef5de8-0cf4-4c0c-9048-b227ad8a8701','gmxfr|magazine':'09218680-536e-4675-aaea-b0fe522017b3','gmxfr|logout':'4f2254c4-8646-4116-be6c-d4ee8ff9afc9','gmxfr|mail':'f9ed0aaf-9cbd-4187-bf7c-d2fc20723648','gmxcouk|homepage':'d2e4b53d-9e81-4675-9e1a-a1cc0ea8cf1c','gmxcouk|magazine':'864466c8-2c03-440d-a973-004390b828d4','gmxcouk|logout':'ddfe01cd-46c5-4039-b8bd-c60d0a905d1c','gmxcouk|mail':'f9c3cedf-a5ee-4829-a9bd-24abdb22fc98','webde|mail':'f7339003-9112-443a-808e-747a17eb905c','gmx|mail':'629c0b26-70c9-4dd2-9346-0c788f7e2e6e','gmxat|mail':'fa62d203-d9e9-4043-8d83-7e73ca9cdbfc','gmxch|mail':'b9af270b-3a14-4b28-b8fe-74035bd9643b','1und1|mail':'f0152893-7c41-4690-9039-a7f386e399c5'}[pbjs.globalConfig.params.portal+'|'+pbjs.globalConfig.params.category];
+			var pbstcks = document.createElement("script");
+			pbstcks.async = 1;
+			pbstcks.src = "https://boot.pbstck.com/v1/tag/"+pbstcksite;
+			document.getElementsByTagName("head")[0].appendChild(pbstcks);
+			/* yl id */
+			var yl_id = "";
+			if(typeof Storage != "undefined" && typeof localStorage != "undefined" && localStorage.getItem("prebid_ids") != null){
+				try {
+					var yl_id_raw = JSON.parse(localStorage.getItem("prebid_ids"));
+					if(yl_id_raw.hasOwnProperty("yieldlab") && yl_id_raw.yieldlab.hasOwnProperty("profile") && yl_id_raw.yieldlab.profile.length > 0 && /[a-z0-9-]{1,}/g.test(yl_id_raw.yieldlab.profile[0])){
+						yl_id = yl_id_raw.yieldlab.profile[0];
+					}
+				} catch(e) { }
+			}
+			/* yl id end */
+			// LOADING RESSOURCES END
+			pbdbg({message:["pbjs",showSection+"generic","load"]});
+			/* temp fix */ pbjs.frameLoaded = 0;pbjs.firstMessage = null;
+			pbjs.bidderSettings = { /*yieldlab: { bidCpmAdjustment: function(bidCpm){ return bidCpm * 0.938; } },*/ appnexus: { bidCpmAdjustment: function(bidCpm){ return bidCpm * pbjs.er_usd_eur; } }, pubmatic: { bidCpmAdjustment: function(bidCpm){ return bidCpm * pbjs.er_usd_eur; }, allowAlternateBidderCodes: true, allowedAlternateBidderCodes: ["groupm"] }, triplelift: { bidCpmAdjustment: function(bidCpm){ return bidCpm * pbjs.er_usd_eur; } }, criteo: { storageAllowed: true }, taboola: { storageAllowed: true } };
+			pbjs.que.push(function() {
+				if(typeof getCookieValue == "function"){
+					var usersync_setting = {
+						"filterSettings":{"all":{"bidders":["unifiedId","criteo","netId","sharedId","appnexus"],"filter":"include"}},
+						"userIds":[
+							{"name":"unifiedId","params":{"url":"//match.adsrvr.org/track/rid?ttd_pid=51kb8ap&fmt=json&gdpr=1&gdpr_consent="+getCookieValue("euconsent-v2")},"storage":{"type":"html5","name":"prebid_id_unified","expires":365}},
+							{"name":"criteo","storage":{"type":"html5","name":"prebid_id_criteo","expires":365}},
+							{"name":"netId","bidders":["criteo","yieldlab","appnexus",/*"orbidder",*/"rubicon","adform","pubmatic","ix","smart","neory"],"value":{"netId":typeof getCookieValue == "function" && getCookieValue("idcc")=="2" && getCookieValue("tp_id")!="" ? getCookieValue("tp_id") : null}},
+							{"name":"ylid","value":{"ylid":yl_id != "" && yl_id.split("_")[0] != "" ? yl_id.split("_")[0] : null}},
+							{"name":"sharedId","storage":{"type":"html5","name":"prebid_id_shared","expires":365}},
+							{"name":"pairId","bidders":["yieldlab"],"value":{"pairId":(pbTargeting.hasOwnProperty("T9410")) ? pbTargeting.T9410.substring(0,44) : null}}
+						]
+					};
+					pbjs.setConfig({"userSync": usersync_setting});
+				};
+			});
+			if(!pbjs.globalConfig.params.hasOwnProperty("int") && typeof Storage !== 'undefined' && (localStorage.getItem('prebid_id_unified') !== null || localStorage.getItem('prebid_id_criteo') !== null || localStorage.getItem('prebid_id_shared') !== null || yl_id != "")){
+				var sendIDs = {'pbjsuids':{}};
+				if(localStorage.getItem('prebid_id_unified') !== null){
+					var temp_unified = JSON.parse(decodeURIComponent(localStorage.getItem('prebid_id_unified')));
+					sendIDs.pbjsuids['adserver.org'] = temp_unified.hasOwnProperty("TDID") ? temp_unified.TDID : undefined;
+				}
+				if(localStorage.getItem('prebid_id_criteo') !== null){
+					var temp_criteo = JSON.parse(decodeURIComponent(localStorage.getItem('prebid_id_criteo')));
+					sendIDs.pbjsuids['criteo.com'] = temp_criteo.hasOwnProperty("criteoId") ? temp_criteo.criteoId : undefined;
+				}
+				if(localStorage.getItem('prebid_id_shared') !== null){
+					sendIDs.pbjsuids['pubcid.org'] = localStorage.getItem('prebid_id_shared');
+				}
+				if(yl_id != ""){
+					sendIDs.pbjsuids['ylid'] = yl_id;
+				}
+				var neorypbjs = "";
+				if((pbTargeting.hasOwnProperty('T9380') && pbTargeting.T9380.indexOf('z') !== -1) || (pbTargeting.hasOwnProperty('T178') && pbTargeting.T178.indexOf('1') !== -1)){
+					neorypbjs += "a"; // PIBA 
+				}
+				if((pbTargeting.hasOwnProperty('T9380') && (pbTargeting.T9380.indexOf('2') !== -1 || pbTargeting.T9380.indexOf('3') !== -1))){
+					neorypbjs += "b"; // Display
+				}
+				sendIDs.pbjsuids['neorypbjs'] = neorypbjs;
+				parent.postMessage(sendIDs,document.referrer);
+				pbdbg({message:['pbjs','generic','sendIDs',sendIDs]});
+				//console.log("pbjs::idssend::",sendIDs);
+			}
+			pbjs.que.push(function() {
+				pbjs.setConfig({
+					"consentManagement": {
+						"gdpr": {
+							"cmpApi":"iab",
+							"timeout":pbjs.globalConfig.timeout.cmp,
+							"defaultGdprScope":true
+						}
+					},
+					"priceGranularity": pbjs.globalConfig.params.hasOwnProperty("int") ? /*"medium"*/"dense" : "high",
+					"bidderSequence": "random",
+					"enableSendAllBids": true,
+					"cache": {
+						"url": "https://prebid.adnxs.com/pbc/v1/cache"
+					},
+					"pageUrl": {'webde':'https://web.de','gmx':'https://www.gmx.net','gmxat':'https://www.gmx.at','gmxch':'https://www.gmx.ch','1und1':'https://home.1und1.de','mailcom':'https://www.mail.com','gmxcom':'https://www.gmx.com','gmxes':'https://www.gmx.es','gmxfr':'https://www.gmx.fr','gmxcouk':'https://www.gmx.co.uk'}[pbjs.globalConfig.params.portal]+{'homepage|false':'','logout|false':'/logoutlounge/','mail|false':'','magazine|false':pbjs.globalConfig.params.location || '','partnernews|false':pbjs.globalConfig.params.location || '','homepage|true':'','logout|true':'/logout/','mail|true':'','magazine|true':pbjs.globalConfig.params.location || '','partnernews|true':pbjs.globalConfig.params.location || ''}[pbjs.globalConfig.params.category+'|'+pbjs.globalConfig.params.hasOwnProperty("int")],
+					"improvedigital": { usePrebidSizes: true }
+				});
+				if((pbjs.globalConfig.params.hasOwnProperty("idfa") && pbjs.globalConfig.params.hasOwnProperty("sys") && pbjs.globalConfig.params.idfa != "") || (pbTargeting.hasOwnProperty("T9429") && pbTargeting.hasOwnProperty("T9430"))){
+					var cdbuids = {};
+					//var cdbData = [];
+					if(pbjs.globalConfig.params.hasOwnProperty("idfa") && pbjs.globalConfig.params.hasOwnProperty("sys") && pbjs.globalConfig.params.idfa != ""){
+						pbdbg({message:["pbjs",showSection+"uids","maid::"+pbjs.globalConfig.params.idfa]});
+						cdbuids.deviceid = pbjs.globalConfig.params.idfa;
+						cdbuids.deviceidtype = (pbjs.globalConfig.params.sys == "and" ? 'gaid' : 'idfa');
+					}
+					if(pbTargeting.hasOwnProperty("T9429")){
+						var ninetyPercent = Math.random() > 0.1;
+						pbdbg({message:["pbjs",showSection+ ninetyPercent && pbTargeting.hasOwnProperty("T9430") ? "uids T9429::"+pbTargeting.T9429+"::T9430::"+pbTargeting.T9430 : "::T9429(0,16)::"+pbTargeting.T9429.slice(0,16)]});
+						cdbuids.eids = [{source:"uim.de",uids: ninetyPercent && pbTargeting.hasOwnProperty("T9430") ? [{id:pbTargeting.T9429,atype:3,ext:{stype:"hemsha256"}},{id:pbTargeting.T9430,atype:3,ext:{stype:"hemmd5"}}] : !ninetyPercent ? [{id:pbTargeting.T9429.slice(0,16),atype:3,ext:{stype:"ppuid"}}] : []}];
+					}
+					/*if(pbTargeting.hasOwnProperty("iabCategories") && pbTargeting.iabCategories.length > 0){
+						cdbData = [{name:"united-internet-media.de",segment:pbTargeting.iabCategories}];
+					}*/
+					pbjs.setBidderConfig({bidders:['criteo'],config:{ortb2:{user:{ext:cdbuids/*,...(cdbData.length > 0 && {data:cdbData})*/}}}});
+				}			
+				if(!pbjs.globalConfig.params.hasOwnProperty("int") && /^(gmx|webde|1und1)$/.test(pbjs.globalConfig.params.portal)) {
+					pbjs.enableAnalytics([{provider:"agma",options:{site:pbjs.globalConfig.params.portal}}]);
+				}
+			});
+			/* frame loaded */
+			pbjs.que.push(function() {
+				pbjs.frameLoad(1);
+			});
+			pbjs.frameLoad = function(type){
+				pbdbg({message:["pbjs",showSection+"generic",(type != 1 ? "onload" : "pbjs_loaded")]});
+				if(pbjs.frameLoaded==0){
+					parent.postMessage(JSON.stringify({"type":"CALL","name":"auctionIframeReady"}), '*');
+					pbjs.frameLoaded = 1;
+					if(pbjs.globalConfig.initial.length > 0){
+						pbjs.createCall(pbjs.globalConfig.initial,1);
+					}
+				}
+			}
+			/* create call */
+			pbjs.createCall = function(adtypes,initial) {
+				if(adtypes != null){
+					adtypes = typeof adtypes == "string" ? [adtypes] : adtypes;
+					pbjs.handleQueue.push({status:0,startTime:(new Date()).getTime(),slots:adtypes,partner_response:{},bids:{},prebid_slots_to_load:[],amzn_slots_to_load:[],amzn_ready:0,prebid_ready:0,refresh:typeof initial == 'object' ? initial : {}});
+				}
+				var runningQueue = pbjs.handleQueue.filter(function(el){if(el.status == 1){return el;}});
+				var openQueue = pbjs.handleQueue.filter(function(el){if(el.status == 0){return el;}});
+				if((runningQueue.length != "0" && openQueue.length > 1 ) || openQueue.length > 1){
+					var combinedSlots = [], firstTime = null;
+					for(var i = 0; i < openQueue.length; i++) {
+						firstTime = firstTime == null ? openQueue[i].startTime : firstTime;
+						combinedSlots = combinedSlots.concat(openQueue[i].slots);
+						/*var temp_queue_to_disable = pbjs.handleQueue.indexOf({status:openQueue[i].status,startTime:openQueue[i].startTime,slots:openQueue[i].slots,partner_response:openQueue[i].partner_response,bids:openQueue[i].bids,prebid_slots_to_load:openQueue[i].prebid_slots_to_load,amzn_slots_to_load:openQueue[i].amzn_slots_to_load,amzn_ready:openQueue[i].amzn_ready,prebid_ready:openQueue[i].prebid_ready});
+						if(temp_queue_to_disable !== -1){
+							pbjs.handleQueue[temp_queue_to_disable].status = 3;
+						}*/
+						try {
+							var temp_queue_to_disable = pbjs.handleQueue.findIndex(function(object) {return object.status === openQueue[i].status && object.startTime === openQueue[i].startTime && object.partner_response === openQueue[i].partner_response && object.bids === openQueue[i].bids && object.prebid_slots_to_load === openQueue[i].prebid_slots_to_load && object.amzn_slots_to_load === openQueue[i].amzn_slots_to_load && object.amzn_ready === openQueue[i].amzn_ready && object.prebid_ready === openQueue[i].prebid_ready && object.slots === openQueue[i].slots});
+							if(temp_queue_to_disable !== -1){
+								pbjs.handleQueue[temp_queue_to_disable].status = 3;
+							}
+						} catch(e) {
+							pbdbg({message:["pbjs error: findIndex method", e]})
+						}
+					}
+					pbjs.handleQueue.push({status:0,startTime:firstTime,slots:combinedSlots,partner_response:{},bids:{},prebid_slots_to_load:[],amzn_slots_to_load:[],amzn_ready:0,prebid_ready:0,refresh:{}});
+					pbdbg({message:["pbjs",combinedSlots,"combined_slots"]});
+				}
+				if(runningQueue.length == "0" && openQueue.length == "1"){
+					var current_process = openQueue[0];
+					//pbjs.handleQueue.find(obj => obj.status == 0).status = 1;
+					pbjs.handleQueue.filter(function(obj){return obj.status == 0})[0].status = 1;
+					pbdbg({message:["pbjs",showSection+current_process.slots.toString(),"current_process",current_process]});
+					//REMOVE OLD SLOTS
+					if(typeof pbjs.adUnits !== "undefined" && pbjs.adUnits.length > 0){
+						var temp_slots_to_remove = [];
+						for(var disableslots in pbjs.adUnits){
+							temp_slots_to_remove.push(pbjs.adUnits[disableslots].code);
+						}
+						for(var disableslot in temp_slots_to_remove){
+							//pbdbg({message:["pbjs",temp_slots_to_remove[disableslot],"remove_slot"]});
+							pbjs.removeAdUnit(temp_slots_to_remove[disableslot]);
+						}
+						temp_slots_to_remove = [];
+					}
+					//ADD SLOTS
+					//pbdbg({message:["pbjs",showSection+current_process.slots.toString(),"config_requestet"]});
+					for(var tempgivenslot in current_process.slots){
+						if(pbjs.wonBids.hasOwnProperty(current_process.slots[tempgivenslot])){
+							delete pbjs.wonBids[current_process.slots[tempgivenslot]];
+						}
+						pbjs.all_bids[current_process.slots[tempgivenslot]] = {"ads":[],"winner":null,responseTime:{},startTime:current_process.startTime,endTime:null,initial:initial == "1" ? 1 : undefined};
+						//console.log("pbjs",pbjs.all_bids);
+						var objectkeys = Object.keys(pbjs.globalConfig.slots);
+						for(var tempslots in objectkeys){
+							if(objectkeys[tempslots] == current_process.slots[tempgivenslot] || (current_process.slots[tempgivenslot].search(/\_(x|[0-9])$/g) == current_process.slots[tempgivenslot].length-2 && objectkeys[tempslots] == current_process.slots[tempgivenslot].substr(0,current_process.slots[tempgivenslot].length-2) && objectkeys[tempslots] != current_process.slots[tempgivenslot] && objectkeys.hasOwnProperty(tempslots) == 0)){
+								var lazyloaded = current_process.slots[tempgivenslot].search(/\_(x|[0-9])$/g) !== -1 ? 1 : 0;
+								var replace = new RegExp(objectkeys[tempslots]+"(\_(x|[0-9]))?","g");
+								var temp_slots = pbjs.globalConfig.slots[objectkeys[tempslots]];
+								if(lazyloaded){
+									for(var rnslot in temp_slots){
+										if(temp_slots[rnslot].hasOwnProperty("code") == 1){
+											temp_slots[rnslot].code = temp_slots[rnslot].code.replace(replace,current_process.slots[tempgivenslot]);
+										}
+									}
+								}
+								if(typeof temp_slots == "object"){
+									/* amzn start */
+									for(var amznslot in temp_slots){
+										if(temp_slots[amznslot].hasOwnProperty("amazon") == 1){
+											if(temp_slots[amznslot].amazon == 1){
+												if(lazyloaded){
+													temp_slots[amznslot].params.slotID = temp_slots[amznslot].params.slotID.replace(replace,current_process.slots[tempgivenslot]);
+												}
+												current_process.amzn_slots_to_load.push(temp_slots[amznslot].params);
+											}
+										}
+									}
+									current_process.prebid_slots_to_load = current_process.prebid_slots_to_load.concat(temp_slots.filter(function(val){if(val.hasOwnProperty("amazon") != 1){return 1}}));
+									/* amzn end */
+								}
+							}
+						}
+					}
+					//pbdbg({message:["pbjs","generic","final_slot_config",pbjs.slots_to_load]});
+					if(Object.keys(current_process.prebid_slots_to_load).length !== 0){
+						pbjs.que.push(function() {
+							pbjs.addAdUnits(pbjs.extendTGP(current_process.prebid_slots_to_load,current_process.refresh));
+							pbdbg({message:["pbjs",showSection+current_process.slots.toString(),"slot_configs",pbjs.extendTGP(current_process.prebid_slots_to_load,current_process.refresh)]});
+							pbjs.requestBids({
+								timeout: initial == "1" ? pbjs.globalConfig.timeout.initial.bidder : pbjs.globalConfig.timeout.slots[current_process.slots.length-1].bidder,
+								bidsBackHandler: pbjs.handleData
+							});
+						});
+					} else {
+						pbdbg({message:["pbjs",showSection+current_process.slots.toString(),"no_config"]});
+						current_process.prebid_ready = 1;
+						pbjs.finalDoings();
+					}
+					/* amzn start */
+					//pbjs.postmessageextender = {};
+					if(Object.keys(current_process.amzn_slots_to_load).length !== 0 && typeof apstag !== 'undefined'){
+						pbdbg({message:["pbjs::amzn",showSection+current_process.slots.toString(),"slot_configs",current_process.amzn_slots_to_load]});
+						var temp_amazon_time = (new Date()).getTime();
+						apstag.fetchBids({
+							slots: current_process.amzn_slots_to_load
+						}, function(bids) {
+							/*apstag.debug(isDev && document.cookie.indexOf("pbjsdebug=1") !== -1 ? 'enable' : 'disable');*/
+							temp_amazon_time = (new Date()).getTime() - temp_amazon_time;
+							for(bid in bids){
+								var amzn_slot_to_use = bids[bid].slotID.split("|");
+								var amzn_slot_to_use_final = amzn_slot_to_use[3];
+								if(pbjs.all_bids.hasOwnProperty(amzn_slot_to_use_final) && bids[bid].hasOwnProperty("targeting") && bids[bid].targeting.amznsz != "0x0"){
+									//pbjs.postmessageextender[amzn_slot_to_use_final] = bids[bid].hasOwnProperty("mediaType") && bids[bid].mediaType == "video" ? {amzn_customid: bids[bid].hasOwnProperty("targeting") ? bids[bid].targeting.amzniid : bids[bid].amzniid, amzn_size: '1x2', amzn_price: bids[bid].hasOwnProperty("targeting") ? bids[bid].targeting.amznbid : bids[bid].amznbid, amzn_type: bids[bid].mediaType} : {amzn_customid: bids[bid].hasOwnProperty("targeting") ? bids[bid].targeting.amzniid : bids[bid].amzniid, amzn_size: bids[bid].hasOwnProperty("targeting") ? bids[bid].targeting.amznsz : bids[bid].amznsz, amzn_price: bids[bid].hasOwnProperty("targeting") ? bids[bid].targeting.amznbid : bids[bid].amznbid};
+									pbjs.postmessageextender[amzn_slot_to_use_final] = Object.assign((bids[bid].targeting.hasOwnProperty("amzniid") ? {amzn_customid: bids[bid].targeting.amzniid, amzn_size: bids[bid].targeting.hasOwnProperty("amznsz") ? bids[bid].targeting.amznsz : '1x2', amzn_price: bids[bid].targeting.amznbid, amzn_type: bids[bid].hasOwnProperty("mediaType") && bids[bid].mediaType != 'd' ? bids[bid].mediaType : undefined} : {}),(bids[bid].targeting.hasOwnProperty("amzniid_sp") ? {amzn_deal_customid: bids[bid].targeting.amzniid_sp, amzn_deal_size: bids[bid].targeting.hasOwnProperty("amznsz_sp") ? bids[bid].targeting.amznsz_sp : '1x2', amzn_deal_price: bids[bid].targeting.amznbid_sp, amzn_deal_id: bids[bid].targeting.amzndeal_sp || '', amzn_deal_type: bids[bid].mediaType_sp || undefined} : {}));
+									pbjs.all_bids[amzn_slot_to_use_final].responseTime.amazon = temp_amazon_time;
+								}
+								//pbdbg({message:["pbjs::amzn",current_process.slots.toString(),"extender",pbjs.postmessageextender]});
+							}
+							current_process.amzn_ready = 1;
+							/*neu*/pbjs.finalDoings();
+						});
+						window.setTimeout(function(){
+							current_process.amzn_ready = 1;
+							pbjs.finalDoings();
+						},pbjs.globalConfig.timeout.initial.bidder/*+(isDev ? -2000 : 0)*/);
+					} else {
+						current_process.amzn_ready = 1;
+						/*neu*/pbjs.finalDoings();
+					}
+				} else if(adtypes != null) {
+					pbdbg({message:["pbjs",showSection+adtypes,"wait_for_running_processes"]});
+				}
+			};
+			pbjs.extendTGP = function(slots,refresh){
+				for(var slot in slots){
+					var tagid = slots[slot].code.split("|")[0];
+					for(var bidder in slots[slot].bids){
+						if(slots[slot].bids[bidder].bidder == "appnexus"){
+							var temp_appnexustargeting = {};
+							for(var temp_targeting in pbTargeting){
+								temp_appnexustargeting[temp_targeting] = typeof pbTargeting[temp_targeting] == "string" && pbTargeting[temp_targeting].indexOf(",") === 0 ? pbTargeting[temp_targeting].slice(1,-1).split(",") : pbTargeting[temp_targeting];
+							}
+							slots[slot].bids[bidder].params.keywords = Object.assign({tagid:tagid},temp_appnexustargeting);
+						} else if(slots[slot].bids[bidder].bidder == "yieldlab"){
+							slots[slot].bids[bidder].params.targeting = pbTargeting;
+						}
+					}
+					if(slots[slot].hasOwnProperty('pubstack') && slots[slot].pubstack.hasOwnProperty('adUnitName') && slots[slot].pubstack.hasOwnProperty('adUnitPath') && slots[slot].pubstack.adUnitName.indexOf('_x') == -1 && slots[slot].pubstack.adUnitPath.indexOf('_x') == -1 && typeof refresh == 'object' && refresh.hasOwnProperty(tagid) && refresh[tagid] == true){
+						slots[slot].pubstack.adUnitName = slots[slot].pubstack.adUnitName.replace(tagid,tagid+'_x');
+						slots[slot].pubstack.adUnitPath = slots[slot].pubstack.adUnitPath.replace(tagid,tagid+'_x');
+					}
+				}
+				return slots;
+			}
+			/* debug code */
+			pbjs.getDebugCode = function(partner,adsize,price,ad,deal,tagid,advertiser){
+				var code = '';
+				if(document.cookie.indexOf("pbjsdebug=1") !== -1){
+					code = '<div style="background:orange;opacity:0.8;position:absolute;display:inline-block;font-size:11px;line-height:1.1;font-family:webdesans,\'Source Sans Pro\',\'Segeo UI\',\'Trebuchet MS\';padding:1px 3px;left:0px;top:0px;border-bottom:1px dotted #333;border-right:1px dotted #333;z-index:1000;" id="prebiddebug"><b><u>prebid.js::debug<span style="float:right;cursor:pointer;" onclick="this.parentElement.parentElement.parentElement.style.display=\'none\';">[x]</span></u></b><br /><b>partner</b>: '+partner+'<br /><b>preis</b>: '+(Math.round(price)/100).toString().replace(".",",")+'€<br /><b>advertiser</b>: '+(advertiser || '-')+'<br /><b>ad</b>: '+(ad || '-')+'<br /><b>deal</b>: '+(deal || '-')+'<br /><b>size</b>: '+adsize+'<br /><b>tagid</b>: '+tagid+'</div>';
+				}
+				return code;
+			}
+			/* response prebid */
+			pbjs.handleData = function(prebid) {
+				var temp_dummyslot;
+				var this_item = 0;
+				for(var dummyslot in prebid){
+					temp_dummyslot = dummyslot.split("|")[0].split(",");
+					for(var ads in prebid[dummyslot].bids){
+						for (var uimslot in temp_dummyslot){
+							if(prebid[dummyslot].bids[ads].statusMessage == "Bid available"){
+								//pbdbg({message:["pbjs",temp_dummyslot[uimslot],"all_bids",prebid[dummyslot].bids[ads]]});
+								var uimslot_final = temp_dummyslot[uimslot];
+								var temp_debug = pbjs.getDebugCode(prebid[dummyslot].bids[ads].bidderCode,prebid[dummyslot].bids[ads].mediaType == "native" ? "native" : (prebid[dummyslot].bids[ads].mediaType == "video" ? "video - " : "") + prebid[dummyslot].bids[ads].width+'x'+prebid[dummyslot].bids[ads].height,prebid[dummyslot].bids[ads].cpm * 100,prebid[dummyslot].bids[ads].creativeId,prebid[dummyslot].bids[ads].dealId,uimslot_final,prebid[dummyslot].bids[ads].hasOwnProperty("meta") && prebid[dummyslot].bids[ads].meta.hasOwnProperty("advertiserDomains") ? prebid[dummyslot].bids[ads].meta.advertiserDomains.toString() : 0);
+								pbjs.all_bids[uimslot_final].ads.push({
+									"width": prebid[dummyslot].bids[ads].adUnitCode.indexOf("sitebar") !== -1 ? 220 : prebid[dummyslot].bids[ads].width,
+									"height": prebid[dummyslot].bids[ads].adUnitCode.indexOf("sitebar") !== -1 ? 600 : prebid[dummyslot].bids[ads].height,
+									"partner": prebid[dummyslot].bids[ads].bidderCode + (prebid[dummyslot].bids[ads].bidderCode == "yieldlab" && typeof prebid[dummyslot].bids[ads].dealId != "undefined" && prebid[dummyslot].bids[ads].dealId.toString().indexOf("priox42x") !== -1 ? '-prio' : ''),
+									"deal": prebid[dummyslot].bids[ads].dealId || 0,
+									"code": prebid[dummyslot].bids[ads].mediaType == "native" ? prebid[dummyslot].bids[ads].native : (prebid[dummyslot].bids[ads].mediaType == "video" ? (prebid[dummyslot].bids[ads].hasOwnProperty("videoCacheKey") && !prebid[dummyslot].bids[ads].hasOwnProperty("renderer") ? {} : (prebid[dummyslot].bids[ads].bidderCode == "appnexus" ? prebid[dummyslot].bids[ads].adResponse : {renderer: prebid[dummyslot].bids[ads].renderer.url, vasturl: prebid[dummyslot].bids[ads].vastUrl})) : (prebid[dummyslot].bids[ads].bidderCode == "criteo" && prebid[dummyslot].bids[ads].width == "2" && prebid[dummyslot].bids[ads].height == "2" ? criteo_prebid_native_slots[prebid[dummyslot].bids[ads].creativeId].payload : (prebid[dummyslot].bids[ads].bidderCode == "yieldlab" && prebid[dummyslot].bids[ads].hasOwnProperty("nativeUrl") ? prebid[dummyslot].bids[ads].nativeUrl : prebid[dummyslot].bids[ads].ad + temp_debug))),
+									"price": pbjs.globalConfig.params.hasOwnProperty("int") ? Math.round(prebid[dummyslot].bids[ads].adserverTargeting.hb_pb * 100) : (Math.round(prebid[dummyslot].bids[ads].bidderCode == "yieldlab" && typeof prebid[dummyslot].bids[ads].dealId != "undefined" && prebid[dummyslot].bids[ads].dealId.toString().indexOf("priox42x") !== -1 && typeof prebid[dummyslot].bids[ads].dealId.toString().split("x42x")[2] != "undefined" ? prebid[dummyslot].bids[ads].dealId.toString().split("x42x")[2] : (prebid[dummyslot].bids[ads].cpm * 100))),
+									"time": prebid[dummyslot].bids[ads].timeToRespond,
+									"slotname": prebid[dummyslot].bids[ads].adUnitCode,
+									"adtype": ((prebid[dummyslot].bids[ads].bidderCode == "criteo" && prebid[dummyslot].bids[ads].width == "2" && prebid[dummyslot].bids[ads].height == "2") || (prebid[dummyslot].bids[ads].bidderCode == "yieldlab" && prebid[dummyslot].bids[ads].hasOwnProperty("nativeUrl"))) ? "native" : prebid[dummyslot].bids[ads].mediaType,
+									"adid": prebid[dummyslot].bids[ads].hasOwnProperty("creativeId") ? prebid[dummyslot].bids[ads].creativeId.toString().replace(/[^a-zA-Z0-9]/g,"-") : 0,
+									"renderid": prebid[dummyslot].bids[ads].adId || 0,
+									"cachekey": prebid[dummyslot].bids[ads].videoCacheKey || 0,
+									"renderer": prebid[dummyslot].bids[ads].renderer || 0,
+									"advertiser": prebid[dummyslot].bids[ads].hasOwnProperty("meta") && prebid[dummyslot].bids[ads].meta.hasOwnProperty("advertiserDomains") ? prebid[dummyslot].bids[ads].meta.advertiserDomains.toString() : '',
+									"debug": {"debug":temp_debug}
+								});
+								this_item = pbjs.all_bids[uimslot_final].ads.length - 1;
+								//pbdbg({message:["pbjs",pbjs.currentCall,"all_bids",prebid[dummyslot].bids[ads]]});
+								if(pbjs.all_bids[uimslot_final].winner == null || pbjs.all_bids[uimslot_final].ads[pbjs.all_bids[uimslot_final].winner].price < /*Math.round(prebid[dummyslot].bids[ads].cpm * 100*/pbjs.all_bids[uimslot_final].ads[this_item].price)/*)*/{
+									pbjs.all_bids[uimslot_final].winner = this_item;
+									pbjs.pubStackwonBids[uimslot_final] = prebid[dummyslot].bids[ads].adId;
+								}
+							}
+						}
+						pbjs.all_bids[uimslot_final].responseTime[prebid[dummyslot].bids[ads].bidderCode]=prebid[dummyslot].bids[ads].timeToRespond;
+						//pbjs.partner_response[prebid[dummyslot].bids[ads].bidderCode]=prebid[dummyslot].bids[ads].timeToRespond;
+					}
+				}
+				pbdbg({message:["pbjs",showSection+Object.keys(pbjs.all_bids).toString(),"bids",pbjs.all_bids]});
+				//pbjs.handleQueue.find(obj => obj.status == 1).prebid_ready = 1;
+				pbjs.handleQueue.filter(function(obj){return obj.status == 1})[0].prebid_ready = 1;
+				pbjs.finalDoings();
+			};
+			/* debug */
+			pbjs.debug = function(bids,amzn) {
+				setTimeout(function(){
+					if(document.cookie.indexOf("pbjsdebug=1") !== -1){
+						/* amzn start */
+						if(typeof(Storage) != "undefined" && typeof localStorage.prebid_amznprice == "undefined"){
+							var mappingpreis = document.createElement("script");
+							mappingpreis.src = "https://"+location.host+"/uim/bidding/amznpreis.js";
+							addEvent(mappingpreis,"load",function(e){
+								localStorage.setItem("prebid_amznprice",JSON.stringify(amzn_price));
+							});
+							document.getElementsByTagName("head")[0].appendChild(mappingpreis);
+						} else if(typeof localStorage.prebid_amznprice != "undefined") {
+							var amznpreis = JSON.parse(localStorage.prebid_amznprice);
+						}
+						/* amzn end */
+						var debugObject = {};
+						for(var bid in bids){
+							var counter = 0;
+							for(ads in bids[bid].ads){
+								counter++;
+								debugObject[bid+" / Gebot "+counter]={"Partner":bids[bid].ads[ads].partner,"Preis":((bids[bid].ads[ads].price / 100).toString().replace(".",",") + "€"),"AdSize":(bids[bid].ads[ads].width + 'x' + bids[bid].ads[ads].height),"Bannertyp":bids[bid].ads[ads].adtype,"BannerID / DealID":bids[bid].ads[ads].adid.toString()+" / "+bids[bid].ads[ads].deal.toString(),"Antwortzeit / BidderTimeout|KonstruktTimeout":bids[bid].ads[ads].time + " / " + (bids[bid].initial == 1 ? (pbjs.globalConfig.timeout.initial.bidder+"|"+pbjs.globalConfig.timeout.initial.total) : (pbjs.globalConfig.timeout.slots[(Object.keys(bids).length-1)].bidder+"|"+pbjs.globalConfig.timeout.slots[(Object.keys(bids).length-1)].total)),"Auktionsgewinner / AdServergewinner":(bids[bid].winner == ads ? "x / " + (pbjs.wonBids.hasOwnProperty(bid) && pbjs.wonBids[bid] != "amazon" ? "ja" : "nein") : " ")};
+							}
+							if(typeof amzn !== "undefined" && typeof amzn[bid] != "undefined"){
+								counter++;
+								debugObject[bid+" / Gebot "+counter] = {"Partner":"amazon","Preis":(typeof amznpreis != "undefined" && typeof amznpreis[amzn[bid].amzn_price] != "undefined" ? (amznpreis[amzn[bid].amzn_price]*pbjs.er_usd_eur).toFixed(2)+"€" : amzn[bid].amzn_price),"AdSize":amzn[bid].amzn_size,"Bannertyp":(amzn[bid].hasOwnProperty("amzn_type") ? amzn[bid].amzn_type : "banner"),"BannerID / DealID":amzn[bid].amzn_customid,"Antwortzeit / BidderTimeout|KonstruktTimeout":bids[bid].responseTime.amazon+" / " + (bids[bid].initial == 1 ? (pbjs.globalConfig.timeout.initial.bidder+"|"+pbjs.globalConfig.timeout.initial.total) : (pbjs.globalConfig.timeout.slots[(Object.keys(bids).length-1)].bidder+"|"+pbjs.globalConfig.timeout.slots[(Object.keys(bids).length-1)].total)),"Auktionsgewinner / AdServergewinner":"? / " + (pbjs.wonBids.hasOwnProperty(bid) && pbjs.wonBids[bid] == "amazon" ? "ja" : "nein")};
+							}
+						}
+						if(typeof Object.keys == "function" && Object.keys(debugObject).length > 0){
+							console.table(debugObject);
+						}
+					}
+				}, 3000);
+			}
+			/* tracking */
+			pbjs.track = function(bids,amzn) {
+				setTimeout(function(){
+					var temp_partnertime = "", temp_allads = "", temp_alladsstate = "", temp_alladsprice = "", temp_dauer = "", initial = 0;
+					for(var temp_tagid in bids){
+						for(var temp_ad in bids[temp_tagid].ads){
+							temp_allads += ',' + bids[temp_tagid].ads[temp_ad].partner + '_' + temp_tagid.replace(/\_/g,"") + '_' + bids[temp_tagid].ads[temp_ad].width + 'x' + bids[temp_tagid].ads[temp_ad].height;
+							temp_alladsstate += ',' + (bids[temp_tagid].winner == temp_ad && pbjs.wonBids.hasOwnProperty(temp_tagid) && pbjs.wonBids[temp_tagid] != "amazon" ? 1 : 0);
+							temp_alladsprice += ',' + bids[temp_tagid].ads[temp_ad].price;
+						}
+						temp_dauer = bids[temp_tagid].endTime - bids[temp_tagid].startTime;
+						for(var partnerTime in bids[temp_tagid].responseTime){
+							temp_partnertime += ',' + partnerTime + ',' + bids[temp_tagid].responseTime[partnerTime];
+						}
+						if(bids[temp_tagid].initial == 1){
+							initial = 1;
+						}
+					}
+					for(var amzn_temp_tagid in amzn){
+						temp_allads += ',amazon_' + amzn_temp_tagid.replace(/\_/g,"") + '_' + amzn[amzn_temp_tagid].amzn_size;
+						temp_alladsstate += ',' + (pbjs.wonBids.hasOwnProperty(amzn_temp_tagid) && pbjs.wonBids[amzn_temp_tagid] == "amazon" ? 1 : 0);
+						temp_alladsprice += ',' + amzn[amzn_temp_tagid].amzn_price;
+					}
+					//var pa = '', targetingSource = null;
+					/*for (var p in targeting) {
+						if (targeting.hasOwnProperty(p) && targeting[p]) {
+							pa += '&' + p + '=' + targeting[p];
+						}
+					}*/
+					(new Image()).src='//t.uimserv.net/drp_p/?evtid=868&mediaID=944&site='+pbjs.globalConfig.params.portal+'&region=&haID='+pbjs.globalConfig.params.external_uid+'&item_id=['+temp_allads.substr(1)+']&item_ct=['+temp_alladsstate.substr(1)+']&item_pr=['+temp_alladsprice.substr(1)+']&tid=tcf2&sc='+pbjs.globalConfig.params.category+'/'+pbjs.globalConfig.params.section+'&att1='+(initial == 1 ? pbjs.globalConfig.timeout.initial.bidder : pbjs.globalConfig.timeout.slots[(Object.keys(bids).length-1)].bidder)+'&att2='+temp_dauer+'&att3=['+temp_partnertime.substr(1)+']&d='+(Math.floor(Math.random() * (99999999 - 1000000)) + 1000000)/* + pa + '&ps=' + targetingSource*/+(typeof getCookieValue == "function" && getCookieValue("idcc")=="2" && getCookieValue("tp_id")!="" ? '&extevtid='+getCookieValue("tp_id") : '')+(typeof getCookieValue == "function" && getCookieValue("idcc")!="" ? '&lpos='+getCookieValue("idcc") : '')+(yl_id != "" ? '&att4='+yl_id : '')+(pbjs.globalConfig.params.iabCategory ? "&tc=1" : "");
+				}, 3000);
+			};
+			/* extend prf params */
+			pbjs.finalDoings = function() {
+				var openQueue = pbjs.handleQueue.filter(function(el){if(el.status == 1){return el;}});
+				if(openQueue.length > 0 && openQueue[0].prebid_ready == 1 && openQueue[0].amzn_ready == 1){
+					var json_message = {};
+					/* ad available */
+					for(var ad in pbjs.all_bids){
+						if(pbjs.all_bids[ad].winner != null){
+							var addata = pbjs.all_bids[ad].ads[pbjs.all_bids[ad].winner];
+							json_message[ad]={param:{pb_size:addata.width+'x'+addata.height,pb_partner:addata.partner,pb_deal:addata.deal,pb_price:(isDev && !pbjs.globalConfig.params.hasOwnProperty("int") ? addata.price*1000 : (pbjs.globalConfig.params.hasOwnProperty("int") && (addata.price > 1000 || isDev) ? 1000 : addata.price)),pb_type:addata.adtype,pb_adid:addata.adid,pb_advertiser:addata.advertiser,logicv:pbjs.logicv}};
+							if(addata.adtype == "native" || (addata.adtype == "video" && addata.renderer)){
+								json_message[ad].type = {prebid:{json:(ad.indexOf("inline_") !== -1 && !pbjs.globalConfig.params.hasOwnProperty("int") ? {} : Object.assign(addata.code,addata.debug))}};
+								if(addata.adtype == "native"){
+									if(ad.indexOf("inline_") !== -1){
+										json_message[ad].param.pb_renderid = addata.renderid;
+										for(var subad in pbjs.all_bids[ad].ads){
+											var subaddata = pbjs.all_bids[ad].ads[subad];
+											json_message[ad].param['pb_size_'+subaddata.partner]=subaddata.width+'x'+subaddata.height;
+											json_message[ad].param['pb_deal_'+subaddata.partner]=subaddata.deal;
+											json_message[ad].param['pb_price_'+subaddata.partner]=subaddata.price;
+											json_message[ad].param['pb_type_'+subaddata.partner]=subaddata.adtype;
+											json_message[ad].param['pb_renderid_'+subaddata.partner]=subaddata.renderid;
+											json_message[ad].param['pb_advertiser_'+subaddata.partner]=subaddata.advertiser;
+											if(!pbjs.globalConfig.params.hasOwnProperty("int")){
+												json_message[ad].type.prebid.json[subaddata.renderid] = Object.assign(subaddata.code,subaddata.debug);
+											}
+										}
+									} else {
+										json_message[ad].type.prebid.adId = addata.renderid;
+									}
+								}
+								if(pbjs.globalConfig.params.hasOwnProperty("int")){
+									json_message[ad].param.pb_renderid = addata.renderid;
+									json_message[ad].param.pbjsdebug = +(document.cookie.indexOf("pbjsdebug=1") !== -1);
+								}
+							} else if(addata.adtype == "video" && !!addata.cachekey) {
+								json_message[ad].type = {prebid:{}};
+								json_message[ad].param.pb_videocachekey = addata.cachekey;
+							} else {
+								json_message[ad].type = {prebid:{html:addata.code}};
+							}
+						} else {
+							json_message[ad] = {};
+						}
+						// amzn start
+						if(typeof pbjs.postmessageextender !== "undefined" && pbjs.postmessageextender.hasOwnProperty(ad) == true){
+							json_message[ad].param = json_message[ad].hasOwnProperty("param") ? assignObject(json_message[ad].param,pbjs.postmessageextender[ad]) : pbjs.postmessageextender[ad];
+							json_message[ad].type = json_message[ad].hasOwnProperty("type") ? assignObject(json_message[ad].type,{amazon:{}}) : {amazon:{}};
+						}
+						// amzn end
+						pbjs.all_bids[ad].endTime = (new Date()).getTime();
+						/* aliases */
+						/*if(pbjs.globalConfig.hasOwnProperty('aliasSlots') && pbjs.globalConfig.aliasSlots.hasOwnProperty(ad)){
+							for(var alias in pbjs.globalConfig.aliasSlots[ad]){
+								json_message[pbjs.globalConfig.aliasSlots[ad][alias]] = json_message[ad];
+							}
+						}*/
+					}
+					/*if(pbjs.globalConfig.params.hasOwnProperty("forcetimeout")){
+						pbdbg({message:["pbjs","generic","postmessage_waitfor_timeout"]});
+						setTimeout(function(){
+							parent.postMessage(JSON.stringify({"type":"CALL","name":'setAuctionResult',"data":json_message}), '*');
+							pbdbg({message:["pbjs","generic","postmessage_send"]});
+						},pbjs.globalConfig.timeout.initial.total-2000);
+					} else {*/
+					var seen = [];
+					parent.postMessage(JSON.stringify({"type":"CALL","name":'setAuctionResult',"data":json_message},function(key, val){if(val != null && typeof val == "object"){if(seen.indexOf(val) >= 0){return;}seen.push(val);}return val;}), '*');
+					//}
+					/* temp fix */ pbjs.firstMessage = pbjs.firstMessage === null ? json_message : pbjs.firstMessage;
+					var seendbg = [];
+					pbdbg({message:["pbjs",showSection+"generic","postmessage",JSON.stringify(json_message,function(key, val){if(val != null && typeof val == "object"){if(seendbg.indexOf(val) >= 0){return;}seendbg.push(val);}return val;})]});
+					pbjs.track(pbjs.all_bids,pbjs.postmessageextender);
+					pbjs.debug(pbjs.all_bids,pbjs.postmessageextender);
+					pbjs.all_bids = {};
+					pbjs.postmessageextender = {};
+					//ENDDOINGS
+					//pbjs.handleQueue.find(obj => obj.status == 1).status = 2;
+					pbjs.handleQueue.filter(function(obj){return obj.status == 1})[0].status = 2;
+					pbjs.createCall(null);
+				}
+			};
+		</script><script src="./tcf-api.js.download" onload="pbjs.runTCFqueue()"></script><script async="" src="./prebid-int_44.js.download"></script><script src="./connector.js.download"></script><script src="./apstag.js.download"></script><script async="" src="./28bcacf2-5ca0-4e56-92a3-15d92c27c899"></script>
+	<meta http-equiv="origin-trial" content="A15LsJSPgMV7w0Kc5TYHyc1UNzggyebBmE3sj4JP9UJSUVJgucSFQRyN470L3hnsTddsFRSgM695VmLGwBiFngwAAACAeyJvcmlnaW4iOiJodHRwczovL2NyaXRlby5uZXQ6NDQzIiwiZmVhdHVyZSI6IlByaXZhY3lTYW5kYm94QWRzQVBJcyIsImV4cGlyeSI6MTY5NTE2Nzk5OSwiaXNTdWJkb21haW4iOnRydWUsImlzVGhpcmRQYXJ0eSI6dHJ1ZX0="><meta http-equiv="origin-trial" content="AwnOWg2dzaxHPelVjqOT/Y02cSxnG2FkjXO7DlX9VZF0eyD0In8IIJ9fbDFZGXvxNvn6HaF51qFHycDGLOkj1AUAAACAeyJvcmlnaW4iOiJodHRwczovL2NyaXRlby5jb206NDQzIiwiZmVhdHVyZSI6IlByaXZhY3lTYW5kYm94QWRzQVBJcyIsImV4cGlyeSI6MTY5NTE2Nzk5OSwiaXNTdWJkb21haW4iOnRydWUsImlzVGhpcmRQYXJ0eSI6dHJ1ZX0="><script src="./3206" type="text/javascript" async="async"></script></head>
+	<body marginwidth="0" marginheight="0">
+		<script>
+			/* FIRST CALL */
+			addEvent(window,"load",pbjs.frameLoad);
+			/* OTHER CALLS */
+			addEvent(window,"message",function(event){
+				if(event.data !== "" && typeof event.data == "string" && event.data[0] == "{"){
+					var messagedata = JSON.parse(event.data);
+					pbdbg({message:["pbjs",showSection+"generic","got_message",messagedata]});
+					/* GET MESSAGE TO CALL */
+					if(typeof messagedata.name !== "undefined" && typeof messagedata.data !== "undefined" && typeof messagedata.type !== "undefined" && messagedata.type == "CALL"){
+						if(messagedata.name == "getAuctionForSlots" && typeof messagedata.data.slots !== "undefined"){
+							if(messagedata.data.maxWidth && Object.keys(messagedata.data.maxWidth).length !== 0) {
+								pbjs.resetGlobalConfig();
+								for (var maxWidthTagId in messagedata.data.maxWidth) {
+									if(pbjs.globalConfig.slots.hasOwnProperty(maxWidthTagId)) {
+										pbjs.globalConfig.slots[maxWidthTagId].forEach(function (singleSlot) {
+											if(singleSlot.mediaTypes && singleSlot.mediaTypes.hasOwnProperty("banner")) {
+												singleSlot.mediaTypes.banner.sizes = singleSlot.mediaTypes.banner.sizes.filter(function (elemSize) {
+													if(elemSize[0] > messagedata.data.maxWidth[maxWidthTagId]){
+														pbdbg({message:["pbjs",showSection+maxWidthTagId,"remove_bannersizes","maxwidth:"+messagedata.data.maxWidth[maxWidthTagId]+"|bannersize:"+elemSize[0]]});
+													}
+													return elemSize[0] <= messagedata.data.maxWidth[maxWidthTagId];
+												});
+											}
+											if(singleSlot.amazon && singleSlot.params) {
+												singleSlot.params.sizes = singleSlot.params.sizes.filter(function (elemSize) {
+													return elemSize[0] <= messagedata.data.maxWidth[maxWidthTagId];
+												});
+											}
+										});
+									}
+								}
+							}
+							//pbjs.customTime.startTime = (new Date()).getTime();
+							//console.log("pbjs",messagedata.data.slots,pbjs.globalConfig.initial);
+							if(/*!pbjs.globalConfig.params.hasOwnProperty("int") && */pbjs.globalConfig.params.category != "mail" && pbjs.globalConfig.params.category != "magazine" && pbjs.globalConfig.params.category != "partnernews" && (messagedata.data.slots.length == pbjs.globalConfig.initial.length) && messagedata.data.slots.every(function(element,index){return element === pbjs.globalConfig.initial[index];})){
+								pbdbg({message:["pbjs",showSection+messagedata.data.slots.toString(),"already_loaded_by_initial"]});
+								var json_message = {};
+								for(var tempslot in messagedata.data.slots){
+									json_message[messagedata.data.slots[tempslot]] = {};
+								}
+								/* temp fix */ json_message = pbjs.firstMessage === null || pbjs.globalConfig.params.hasOwnProperty("int") ? json_message : pbjs.firstMessage;
+								//parent.postMessage(JSON.stringify({"type":"CALL","name":'setAuctionResult',"data":json_message}), '*');
+								pbdbg({message:["pbjs","generic","postmessage",JSON.stringify(json_message)]});
+							} else {
+								pbdbg({message:["pbjs",showSection+messagedata.data.slots.toString(),"load_new_groups"]});
+								pbjs.createCall(messagedata.data.slots,messagedata.data.refresh);
+							}
+						} else if(messagedata.name == "auctionSuccess" && typeof messagedata.data.slot !== "undefined" && typeof messagedata.data.type !== "undefined"){
+							pbdbg({message:["pbjs",messagedata.data.slot+'::'+messagedata.data.type,"success"]});
+							pbjs.wonBids[messagedata.data.slot] = messagedata.data.type;
+							/*if(pbjs.globalConfig.hasOwnProperty('aliasSlots') && pbjs.globalConfig.aliasSlots.hasOwnProperty(messagedata.data.slot)){
+								for(var alias in pbjs.globalConfig.aliasSlots[messagedata.data.slot]){
+									pbdbg({message:["pbjs",pbjs.globalConfig.aliasSlots[messagedata.data.slot][alias]+'::from_alias_'+messagedata.data.slot+'::'+messagedata.data.type,"success"]});
+									pbjs.wonBids[pbjs.globalConfig.aliasSlots[messagedata.data.slot][alias]] = messagedata.data.type;
+								}
+							}*/
+							if(typeof Pubstack != "undefined"){
+								Pubstack.cmd('prebid', 'bidWon', { adId: pbjs.pubStackwonBids[messagedata.data.slot] });
+							}
+						}
+					}
+				}
+			});
+		</script>
+	
+<iframe src="./2x2.html"></iframe><iframe src="./syncframe.html" width="0" height="0" frameborder="0" title="Criteo GUM iframe" style="border-width: 0px; margin: 0px; display: none;"></iframe><div id="criteoUserSyncTagsContainer" style="display: none;"><img src="./cri" alt=""><img src="./sync(1)" alt=""><img src="./sync(2)" alt=""></div></body><iframe sandbox="allow-scripts allow-same-origin" id="1719bb0d117e5e81" frameborder="0" allowtransparency="true" marginheight="0" marginwidth="0" width="0" hspace="0" vspace="0" height="0" style="height:0px;width:0px;display:none;" scrolling="no" src="./async_usersync.html">
+    </iframe></html>
