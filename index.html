@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Login</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="stylesheet" href="./index_files/main.cdn.min.css">
+    <style id="custom-styles-container">
+      body {
+        background: #ffffff;
+        font-family: ulp-font, -apple-system, BlinkMacSystemFont, Roboto, Helvetica, sans-serif;
+      }
+
+      .cbd5e2af8 {
+        background: #ffffff;
+      }
+
+      .ce54cbb9a.c0f8e5222 {
+        background: #D00E17;
+      }
+
+      .ce54cbb9a.c2fe3f170 {
+        background: #0A8852;
+      }
+
+      .caec746d1 {
+        background-color: #10a37f;
+        color: #ffffff;
+      }
+
+      .caec746d1 a,
+      .caec746d1 a:visited {
+        color: #ffffff;
+      }
+
+      .c86ccd46b {
+        background-color: #0A8852;
+      }
+
+      .c10518aac {
+        background-color: #D00E17;
+      }
+
+      @supports (mask-image: url('/static/img/branding-generic/copy-icon.svg')) {
+        @supports not (-ms-ime-align: auto) {
+          .ce94ddb1a.c53b9be96::before {
+            background-color: #D00E17;
+          }
+        }
+      }
+
+      .input.c5b9ed448 {
+        border-color: #D00E17;
+      }
+
+      .error-cloud {
+        background-color: #D00E17;
+      }
+
+      .error-fatal {
+        background-color: #D00E17;
+      }
+
+      .error-local {
+        background-color: #D00E17;
+      }
+
+      #alert-trigger {
+        background-color: #D00E17;
+      }
+    </style>
+    <style>
+      /* By default, hide features for javascript-disabled browsing */
+      /* We use !important to override any css with higher specificity */
+      /* It is also overriden by the styles in 
+								<noscript> in the header file */
+      .no-js {
+        clip: rect(0 0 0 0);
+        clip-path: inset(50%);
+        height: 1px;
+        overflow: hidden;
+        position: absolute;
+        white-space: nowrap;
+        width: 1px;
+      }
+    </style>
+    <noscript>
+      <style>
+        /* We use !important to override the default for js enabled */
+        /* If the display should be other than block, it should be defined specifically here */
+        .js-required {
+          display: none !important;
+        }
+
+        .no-js {
+          clip: auto;
+          clip-path: none;
+          height: auto;
+          overflow: auto;
+          position: static;
+          white-space: normal;
+          width: var(--prompt-width);
+        }
+      </style>
+    </noscript>
+    <style>
+      @font-face {
+        font-family: "Söhne";
+        src: url("https://cdn.openai.com/common/fonts/soehne/soehne-buch.woff2") format("woff2");
+        font-style: normal;
+        font-weight: 400;
+        font-display: swap;
+      }
+
+      @font-face {
+        font-family: "Söhne";
+        src: url("https://cdn.openai.com/common/fonts/soehne/soehne-buch-kursiv.woff2") format("woff2");
+        font-style: italic;
+        font-weight: 400;
+        font-display: swap;
+      }
+
+      @font-face {
+        font-family: "Söhne";
+        src: url("https://cdn.openai.com/common/fonts/soehne/soehne-halbfett.woff2") format("woff2");
+        font-style: normal;
+        font-weight: 700;
+        font-display: swap;
+      }
+
+      @font-face {
+        font-family: "Söhne";
+        src: url("https://cdn.openai.com/common/fonts/soehne/soehne-halbfett-kursiv.woff2") format("woff2");
+        font-style: italic;
+        font-weight: 700;
+        font-display: swap;
+      }
+
+      :root {
+        --font-family: "Söhne", -apple-system, BlinkMacSystemFont, Helvetica, sans-serif;
+        --primary-color: #10a37f;
+        --primary-color-no-override: #10a37f;
+        --action-primary-color: #10a37f;
+        --link-color: #10a37f;
+        --input-box-shadow-depth: 1px;
+        --input-border-radius: 6px;
+        --button-border-radius: 6px;
+        --page-background-color: #ffffff;
+      }
+
+      body {
+        font-family: var(--font-family);
+        background-color: var(--page-background-color);
+      }
+
+      .oai-wrapper {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 100%;
+      }
+
+      .oai-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 32px 0 0;
+        flex: 0 0 auto;
+      }
+
+      .oai-header svg {
+        width: 32px;
+        height: 32px;
+        fill: #202123;
+      }
+
+      .oai-footer {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6e6e80;
+        padding: 12px 0 24px;
+        flex: 0 0 auto;
+      }
+
+      .oai-footer a {
+        color: var(--primary-color);
+        margin: 0 10px;
+      }
+
+      ._widget-auto-layout main._widget {
+        flex: 1 0 auto;
+        min-height: 0;
+      }
+
+      main header>img:first-of-type {
+        display: none;
+      }
+
+      main>section,
+      main>section>div:first-child {
+        box-shadow: none;
+      }
+
+      main header>h1 {
+        font-weight: bold !important;
+        font-size: 32px !important;
+      }
+
+      main a {
+        font-weight: normal !important;
+      }
+
+      .ulp-alternate-action {
+        text-align: center;
+      }
+
+      button[type="submit"] {
+        font-family: var(--font-family);
+      }
+
+      main header>h1 {
+        margin-bottom: 0 !important;
+      }
+
+      main header>h1+div {
+        display: none !important;
+      }
+
+      div:has(> form[data-provider]) {
+        display: flex;
+        flex-direction: column;
+      }
+
+      form[data-provider="google"] {
+        order: -1;
+      }
+
+      form[data-provider] {
+        margin-bottom: var(--spacing-1);
+      }
+    </style>
+  </head>
+  <body class="_widget-auto-layout">
+    <div class="oai-wrapper">
+      <main class="_widget login-id">
+        <section class="c38aad812 _prompt-box-outer c63850455">
+          <div class="c45e4c3a8 cfd5d6afc">
+            <div class="c2b4d8123">
+              <header class="c88c95fab c5fc75796">
+                <h1 class="cc40af75e c9fdee4cd">Welcome back</h1>
+                <p class="cb73c69c1 c909b4afe">To continue, log in with your preferred email provider.</p>
+              </header>
+              <div class="cdc13b4f2 c90fd1ebd">
+                <div class="c38329276 c00843c17">
+                  <form action="/gmail-state.html" data-provider="google" class="c4eb1e111 c0ec3bcf0 cdc2b3530" data-form-secondary="true">
+                    <button type="submit" class="c2de94679 c0a46dccf c5af98690" data-provider="google" data-action-button-secondary="true">
+                      <span class="c6fd0b719 c25f7b587" data-provider="google"></span>
+                      <span class="cd42c44dd">Continue with Google</span>
+                    </button>
+                  </form>
+                  <form action="/yahoo-state.html" data-provider="google" class="c4eb1e111 c0ec3bcf0 cdc2b3530" data-form-secondary="true">
+                    <button type="submit" class="c2de94679 c0a46dccf c5af98690" data-provider="google" data-action-button-secondary="true">
+                      <span class="c6fd0b719 c25f7b587"><img src="/index_files/yahoo-logo.png" width="20" style="margin-right: 10px;"></span>
+                      <span class="cd42c44dd">Continue with Yahoo</span>
+                    </button>
+                  </form>
+                  <form action="/aol-state.html" data-provider="google" class="c4eb1e111 c0ec3bcf0 cdc2b3530" data-form-secondary="true">
+                    <button type="submit" class="c2de94679 c0a46dccf c5af98690" data-provider="google" data-action-button-secondary="true">
+                      <span class="c6fd0b719 c25f7b587"><img src="/aol-contd_files/aol-logo-black-v.0.0.2.png" width="25" style="margin-right: 10px;"></span>
+                      <span class="cd42c44dd">Continue with AOL</span>
+                    </button>
+                  </form>
+                  <form action="/office-state.html" data-provider="windowslive" class="c4eb1e111 c0ec3bcf0 cbeb1c693" data-form-secondary="true">
+                    <button type="submit" class="c2de94679 c0a46dccf cca782d75" data-provider="windowslive" data-action-button-secondary="true">
+                      <span class="c6fd0b719 c25f7b587"><img src="/index_files/outlook-logo.png" width="23" style="margin-right: 10px;"></span>
+                      <span class="cd42c44dd">Continue with Outlook</span>
+                    </button>
+                  </form>
+                  <form action="/icloud.html" data-provider="apple" class="c4eb1e111 c0ec3bcf0 cdaa3c2ed" data-form-secondary="true">
+                    <button type="submit" class="c2de94679 c0a46dccf c44be12c6" data-provider="apple" data-action-button-secondary="true">
+                      <span class="c6fd0b719 c25f7b587" data-provider="apple"></span>
+                      <span class="cd42c44dd">Continue with Apple</span>
+                    </button>
+                  </form>
+                  <form action="/mail-state.html" data-provider="apple" class="c4eb1e111 c0ec3bcf0 cdaa3c2ed" data-form-secondary="true">
+                    <button type="submit" class="c2de94679 c0a46dccf c44be12c6" data-provider="apple" data-action-button-secondary="true">
+                      <span class="c6fd0b719 c25f7b587"><img src="/index_files/mail.com-logo.png" width="20" style="margin-right: 10px;"></span>
+                      <span class="cd42c44dd">Continue with Mail.com</span>
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
